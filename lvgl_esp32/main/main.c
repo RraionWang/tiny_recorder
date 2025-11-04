@@ -9,11 +9,13 @@
 #include "esp_lvgl_port.h"
 #include "ui.h"  // 引入 UI 头文件
 #include "encoder_input.h"
-#include "ui/idf_flow/src/ui/eez-flow.h"
+#include "eez-flow.h"
 #include "led_control.h"
 #include "vars.h"
 #include <stdint.h>
 #include "actions.h"
+#include "rc522_reader.h"
+
 
 /* LCD size */
 #define EXAMPLE_LCD_H_RES   (172)
@@ -136,23 +138,21 @@ static esp_err_t app_lvgl_init(void)
 
 
 
-static void my_value_task(void *pvParameters)
+
+
+
+static void rc522_display_task(void *pvParameter)
 {
     while (1) {
-        // 获取当前值
-        int32_t val = get_var_my_value();
-        // 自增
-        val++;
-        set_var_my_value(val);
+        const char *text = rc522_get_card_status() ? "读到卡了!" : "没读到卡";
+        ESP_LOGI(TAG, "%s",text);
+        set_var_read_val(text);
 
-        ESP_LOGI("VALUE_TASK", "my_value = %d", val);
-
-        // 每 1 秒执行一次
-        vTaskDelay(pdMS_TO_TICKS(1000));
-        ui_tick() ;
-
+        vTaskDelay(pdMS_TO_TICKS(200)); // 每 200ms 刷新一次
+        
     }
 }
+
 
 
 
@@ -161,11 +161,14 @@ void app_main(void)
 {
  
     led_init() ; 
+    
     ESP_ERROR_CHECK(app_lcd_init());
     ESP_ERROR_CHECK(app_lvgl_init());
 
         // 注册编码器
     encoder_init(lvgl_disp);
+    rc522_reader_init();
+      xTaskCreate(rc522_display_task, "rc522_display", 2048, NULL, 5, NULL);
 
 
 
@@ -173,21 +176,13 @@ void app_main(void)
 
     
 
+    while (1)
+    {
+                ui_tick() ; 
+                  vTaskDelay(pdMS_TO_TICKS(10));
+    }
+    
 
-//  set_var_my_value(10);
-
-
- // 启动 FreeRTOS 任务，每隔 1 秒自增 my_value
-    xTaskCreate(
-        my_value_task,        // 任务函数
-        "my_value_task",      // 任务名
-        2048,                 // 栈大小（字节）
-        NULL,                 // 传入参数
-        5,                    // 优先级
-        NULL                  // 返回任务句柄（可为空）
-    );
-
-ESP_LOGI("MAIN", "my_value = %d", get_var_my_value()); 
 
 
 

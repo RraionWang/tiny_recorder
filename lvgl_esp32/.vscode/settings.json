@@ -35,6 +35,10 @@
     "type_traits": "c",
     "utility": "c",
     "stdint.h": "c",
-    "actions.h": "c"
+    "actions.h": "c",
+    "esp_lvgl_port.h": "c",
+    "rc522.h": "c",
+    "rc522_picc.h": "c",
+    "rc522_driver.h": "c"
   }
 }

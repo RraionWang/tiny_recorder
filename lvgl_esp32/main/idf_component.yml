@@ -16,3 +16,4 @@ dependencies:
   #   public: true
   lvgl/lvgl: ^9.0.0
   espressif/esp_lvgl_port: ^2.2.2
+  abobija/rc522: ^3.4.3
