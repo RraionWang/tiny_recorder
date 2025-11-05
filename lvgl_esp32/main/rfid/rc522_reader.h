@@ -13,7 +13,10 @@ void rc522_reader_init(void);
  * @brief 获取当前卡片状态
  * @return true 表示有卡，false 表示无卡
  */
-bool rc522_get_card_status(void);
-bool rc522_get_latest_uid(uint8_t *uid, uint8_t *uid_len);
+
+bool  rc522_get_card_status(void) ; 
+const char* rc522_get_card_uid(void);
+
+
 
 #endif // RC522_READER_H

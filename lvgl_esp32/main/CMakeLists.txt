@@ -11,8 +11,12 @@ idf_component_register(SRCS "main.c"
                              "ui/ui_font_chinese_font_20.c"
                              "rfid/rc522_reader.c"
                              "ui/vars.c"
+                             "sdcard/sdcard.c"
+                             "lcd/lcd.c"
                             
                     INCLUDE_DIRS "."
+                                 "sdcard"
                                  "ui"
                                  "led"
-                                 "rfid")
+                                 "rfid"
+                                 "lcd")

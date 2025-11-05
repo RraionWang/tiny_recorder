@@ -23,12 +23,19 @@ void create_screen_main() {
     {
         lv_obj_t *parent_obj = obj;
         {
-            lv_obj_t *obj = lv_label_create(parent_obj);
-            objects.obj0 = obj;
-            lv_obj_set_pos(obj, 120, 70);
-            lv_obj_set_size(obj, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
-            lv_obj_set_style_text_font(obj, &ui_font_chinese_font_20, LV_PART_MAIN | LV_STATE_DEFAULT);
-            lv_label_set_text(obj, "");
+            lv_obj_t *obj = lv_button_create(parent_obj);
+            lv_obj_set_pos(obj, 110, 61);
+            lv_obj_set_size(obj, 100, 50);
+            {
+                lv_obj_t *parent_obj = obj;
+                {
+                    lv_obj_t *obj = lv_label_create(parent_obj);
+                    lv_obj_set_pos(obj, 0, 0);
+                    lv_obj_set_size(obj, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
+                    lv_obj_set_style_align(obj, LV_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
+                    lv_label_set_text(obj, "Button");
+                }
+            }
         }
     }
     
@@ -38,20 +45,11 @@ void create_screen_main() {
 void tick_screen_main() {
     void *flowState = getFlowState(0, 0);
     (void)flowState;
-    {
-        const char *new_val = evalTextProperty(flowState, 0, 3, "Failed to evaluate Text in Label widget");
-        const char *cur_val = lv_label_get_text(objects.obj0);
-        if (strcmp(new_val, cur_val) != 0) {
-            tick_value_change_obj = objects.obj0;
-            lv_label_set_text(objects.obj0, new_val);
-            tick_value_change_obj = NULL;
-        }
-    }
 }
 
 
 static const char *screen_names[] = { "Main" };
-static const char *object_names[] = { "main", "obj0" };
+static const char *object_names[] = { "main" };
 
 
 typedef void (*tick_screen_func_t)();

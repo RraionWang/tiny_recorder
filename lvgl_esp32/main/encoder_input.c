@@ -5,9 +5,9 @@
 #include "lvgl.h"
 #include "esp_timer.h"  // 用于高精度时间戳
 
-#define ENCODER_A_PIN       GPIO_NUM_4
-#define ENCODER_B_PIN       GPIO_NUM_5
-#define ENCODER_BTN_PIN     GPIO_NUM_6
+#include "pin_cng.h"
+
+
 
 #define DEBOUNCE_TIME_MS    10  // 防抖时间（毫秒），可根据实际调整
 

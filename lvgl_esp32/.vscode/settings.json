@@ -39,6 +39,12 @@
     "esp_lvgl_port.h": "c",
     "rc522.h": "c",
     "rc522_picc.h": "c",
-    "rc522_driver.h": "c"
+    "rc522_driver.h": "c",
+    "rc522_reader.h": "c",
+    "pin_cng.h": "c",
+    "esp_lcd_panel_vendor.h": "c",
+    "esp_lcd_panel_io.h": "c",
+    "esp_task.h": "c",
+    "freertosconfig.h": "c"
   }
 }

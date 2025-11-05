@@ -20,8 +20,6 @@ enum FlowGlobalVariables {
 
 // Native global variables
 
-extern const char *get_var_read_val();
-extern void set_var_read_val(const char *value);
 
 
 #ifdef __cplusplus
