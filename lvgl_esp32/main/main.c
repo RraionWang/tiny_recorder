@@ -14,10 +14,26 @@
 #include "freertos/task.h"
 #include "speaker.h"
 #include "recorder.h"
+#include "driver/gpio.h"
+#include "esp_timer.h"
+#include "time.h"
+#include "esp_log.h"
+#include "recorder.h"
 
 
 
 
+// 测试代码开始
+
+// === 按键定义 ===
+#define BUTTON_A_GPIO  GPIO_NUM_12
+#define BUTTON_B_GPIO  GPIO_NUM_13
+#define BUTTON_PRESSED 0  // 假设按键按下时为低电平
+
+static const char* TAG = "main";
+
+
+static inmp441_recorder_t recorder;
 
 /* 主函数入口 */
 void app_main(void)
@@ -25,35 +41,37 @@ void app_main(void)
  
 
     
-    ESP_ERROR_CHECK(app_lcd_init());
-    ESP_ERROR_CHECK(app_lvgl_init());
+    // ESP_ERROR_CHECK(app_lcd_init());
+    // ESP_ERROR_CHECK(app_lvgl_init());
 
 
  
 
-    ui_init() ; 
+    // ui_init() ; 
 
 
     sd_init();
-    sd_wr_test() ; 
-    ui_tick() ; 
+    // sd_wr_test() ; 
+    // ui_tick() ; 
 
-    wav_player_init();
-    wav_player_play("/sdcard/canon.wav") ;
+    // wav_player_init();
+    // wav_player_play("/sdcard/canon.wav") ;
 
-      rc522_reader_init();
-
-
-
-    while(1){
-        ui_tick();
-        vTaskDelay(pdMS_TO_TICKS(10));
-    }
+    // rc522_reader_init();
 
 
 
-    
+    // while(1){
+    //     ui_tick();
+    //     vTaskDelay(pdMS_TO_TICKS(10));
+    // }
 
-    
+
+
+    ESP_ERROR_CHECK(inmp441_init(&recorder));
+    vTaskDelay(pdMS_TO_TICKS(2000)); // 等待SD卡就绪
+    ESP_ERROR_CHECK(inmp441_start_record(&recorder, "rec_test.wav"));
+    vTaskDelay(pdMS_TO_TICKS(10000)); // 录10秒
+    inmp441_stop_record(&recorder);
     
 }

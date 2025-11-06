@@ -82,38 +82,11 @@ static void on_picc_state_changed(void *arg, esp_event_base_t base, int32_t even
 
         ESP_LOGI("RFID", "检测到卡片，UID: %s", uid_hex);
 
-        if (file_exists(filepath)) {
-            ESP_LOGI("RFID", "🔊 播放录音: %s", filepath);
-            // 启动播放任务...
 
-
-             char *path_copy = strdup(filepath);
-            if (path_copy && xTaskCreate(play_wav_task, "play_wav", 4096, path_copy, 5, NULL) != pdPASS) {
-                ESP_LOGE("RFID", "创建播放任务失败");
-                free(path_copy);
-            }
-
-
-        } else {
-            
-             ESP_LOGI("RFID", "⏺️ 开始录音到: %s", filepath);
-    
-    esp_err_t err = start_recording_to_file(filepath);
-    if (err != ESP_OK) {
-        ESP_LOGE("RFID", "❌ 录音启动失败: %s", esp_err_to_name(err));
-        // 不设置 g_is_recording_for_card，避免后续错误停止
-    } else {
-        strncpy(g_current_uid, uid_hex, sizeof(g_current_uid) - 1);
-        g_current_uid[sizeof(g_current_uid) - 1] = '\0';
-        g_is_recording_for_card = true;
-    }
-
-
-        }
 
     } else if (picc->state == RC522_PICC_STATE_IDLE && event->old_state >= RC522_PICC_STATE_ACTIVE) {
         if (g_is_recording_for_card) {
-            stop_recording();
+            // stop_recording();
             g_is_recording_for_card = false;
             memset(g_current_uid, 0, sizeof(g_current_uid));
         }

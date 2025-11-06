@@ -1,332 +1,144 @@
+#include "recorder.h"
+#include "esp_log.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/time.h>
+#include <sys/stat.h>
+#include <sys/unistd.h>
+#include "esp_check.h"
 #include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "freertos/semphr.h"
-#include "esp_log.h"
-#include "recorder.h"
-#include "driver/i2s_std.h"
 
+static const char *TAG = "INMP441";
 
+static void write_wav_header(FILE *f, int sample_rate, int bits_per_sample, int num_channels) {
+    uint8_t header[44];
+    int byte_rate = sample_rate * num_channels * bits_per_sample / 8;
+    int block_align = num_channels * bits_per_sample / 8;
+    memset(header, 0, sizeof(header));
 
+    memcpy(header, "RIFF", 4);
+    *(uint32_t *)(header + 4) = 0;  // 先填0，最后更新文件大小
+    memcpy(header + 8, "WAVEfmt ", 8);
+    *(uint32_t *)(header + 16) = 16;
+    *(uint16_t *)(header + 20) = 1;  // PCM
+    *(uint16_t *)(header + 22) = num_channels;
+    *(uint32_t *)(header + 24) = sample_rate;
+    *(uint32_t *)(header + 28) = byte_rate;
+    *(uint16_t *)(header + 32) = block_align;
+    *(uint16_t *)(header + 34) = bits_per_sample;
+    memcpy(header + 36, "data", 4);
+    *(uint32_t *)(header + 40) = 0;  // 先填0
 
+    fwrite(header, 1, sizeof(header), f);
+}
 
-#define I2S_BCLK_PIN   GPIO_NUM_4
-#define I2S_WS_PIN     GPIO_NUM_5
-#define I2S_DIN_PIN    GPIO_NUM_6
-#define I2S_PORT       I2S_NUM_1
+esp_err_t inmp441_init(inmp441_recorder_t *rec) {
+    ESP_LOGI(TAG, "Initializing INMP441 I2S...");
 
-static i2s_chan_handle_t i2s_rx_handle = NULL;
-static bool is_inited = false;
-
-static const char* TAG = "recorder" ; 
-
-bool inmp441_init(uint32_t sample_rate)
-{
-    if (is_inited) {
-        ESP_LOGW(TAG, "Already initialized");
-        return true;
-    }
-
-    // 1. 创建 I2S RX 通道
     i2s_chan_config_t chan_cfg = I2S_CHANNEL_DEFAULT_CONFIG(I2S_PORT, I2S_ROLE_MASTER);
-    chan_cfg.dma_desc_num = 4;
-    chan_cfg.dma_frame_num = 128;
-    esp_err_t ret = i2s_new_channel(&chan_cfg, NULL,&i2s_rx_handle);
-    if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "i2s_new_channel failed: %s", esp_err_to_name(ret));
-        return false;
-    }
-
-    // 2. 使用宏初始化 slot_cfg（注意：只有 2 个参数！）
-    i2s_std_slot_config_t slot_cfg = I2S_STD_PHILIPS_SLOT_DEFAULT_CONFIG(
-        I2S_DATA_BIT_WIDTH_32BIT,
-        I2S_SLOT_MODE_MONO
-    );
-
-    // 手动覆盖关键字段以适配 INMP441
-    slot_cfg.slot_mask = I2S_STD_SLOT_LEFT;  // 或 I2S_STD_SLOT_RIGHT，取决于 L/R 引脚接法
-    slot_cfg.bit_shift = false;              // 关键：保持 24-bit 左对齐在 32-bit 中
-    // 注意：v5.5 中没有 msb_first 字段，默认就是 MSB first（Philips 模式）
+    ESP_RETURN_ON_ERROR(i2s_new_channel(&chan_cfg, NULL, &rec->rx_chan), TAG, "create channel failed");
 
     i2s_std_config_t std_cfg = {
-        .clk_cfg = I2S_STD_CLK_DEFAULT_CONFIG(sample_rate),
-        .slot_cfg = slot_cfg,
+        .clk_cfg  = I2S_STD_CLK_DEFAULT_CONFIG(SAMPLE_RATE_HZ),
+        .slot_cfg = I2S_STD_MSB_SLOT_DEFAULT_CONFIG(SAMPLE_BITS, CHANNEL_MODE),
         .gpio_cfg = {
             .mclk = I2S_GPIO_UNUSED,
             .bclk = I2S_BCLK_PIN,
-            .ws = I2S_WS_PIN,
+            .ws   = I2S_WS_PIN,
             .dout = I2S_GPIO_UNUSED,
-            .din = I2S_DIN_PIN,
-            .invert_flags = {
-                .mclk_inv = false,
-                .bclk_inv = false,
-                .ws_inv = false,
-            },
+            .din  = I2S_DIN_PIN,
+            .invert_flags = { .mclk_inv = false, .bclk_inv = false, .ws_inv = false },
         },
     };
+    std_cfg.slot_cfg.slot_mask = I2S_STD_SLOT_LEFT; // INMP441 输出左声道数据
+    ESP_RETURN_ON_ERROR(i2s_channel_init_std_mode(rec->rx_chan, &std_cfg), TAG, "i2s std init failed");
 
-    ret = i2s_channel_init_std_mode(i2s_rx_handle, &std_cfg);
-    if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "i2s_channel_init_std_mode failed: %s", esp_err_to_name(ret));
-        i2s_del_channel(i2s_rx_handle);
-        i2s_rx_handle = NULL;
-        return false;
-    }
-
-    ret = i2s_channel_enable(i2s_rx_handle);
-    if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "i2s_channel_enable failed: %s", esp_err_to_name(ret));
-        i2s_del_channel(i2s_rx_handle);
-        i2s_rx_handle = NULL;
-        return false;
-    }
-
-    is_inited = true;
-    ESP_LOGI(TAG, "INMP441 initialized at %lu Hz", sample_rate);
-    return true;
+    ESP_LOGI(TAG, "INMP441 initialized on I2S%d", I2S_PORT);
+    return ESP_OK;
 }
 
-size_t inmp441_read(int32_t *buffer, size_t num_samples, uint32_t timeout_ms)
-{
-    if (!is_inited || !buffer || num_samples == 0) {
-        return 0;
+esp_err_t inmp441_start_record(inmp441_recorder_t *rec, const char *filename) {
+    if (rec->is_recording) {
+        ESP_LOGW(TAG, "Already recording!");
+        return ESP_FAIL;
     }
 
-    size_t bytes_to_read = num_samples * sizeof(int32_t);
+    snprintf(rec->filepath, sizeof(rec->filepath), "/sdcard/%s", filename);
+    rec->file = fopen(rec->filepath, "wb");
+    if (!rec->file) {
+        ESP_LOGE(TAG, "Failed to open %s for writing", rec->filepath);
+        return ESP_FAIL;
+    }
+
+    write_wav_header(rec->file, SAMPLE_RATE_HZ, 16, 1);
+    ESP_ERROR_CHECK(i2s_channel_enable(rec->rx_chan));
+    rec->is_recording = true;
+
+    ESP_LOGI(TAG, "Recording started: %s", rec->filepath);
+    xTaskCreate(inmp441_record_task, "inmp441_record_task", 4096, rec, 5, NULL);
+    return ESP_OK;
+}
+
+void inmp441_record_task(void *param)
+{
+    inmp441_recorder_t *rec = (inmp441_recorder_t *)param;
+    uint8_t *buf = malloc(BUFFER_SIZE);
+    int16_t *out_buf = malloc(BUFFER_SIZE / 2);
     size_t bytes_read = 0;
+    size_t samples_out = 0;
 
-    esp_err_t ret = i2s_channel_read(i2s_rx_handle, buffer, bytes_to_read, &bytes_read, pdMS_TO_TICKS(timeout_ms));
-    if (ret != ESP_OK) {
-        ESP_LOGW(TAG, "I2S read failed: %s", esp_err_to_name(ret));
-        return 0;
-    }
+    ESP_LOGI(TAG, "Recording task running (optimized filter)...");
 
-    return bytes_read / sizeof(int32_t);
-}
+    // DC offset & 平滑滤波用变量
+    float dc_offset = 0.0f;
+    const float alpha = 0.995f;     // 高频保留，去除直流偏移
+    const float gain = 1.0f;        // 可以调节增益 (0.5 ~ 2.0)
 
-void inmp441_deinit(void)
-{
-    if (!is_inited) return;
+    while (rec->is_recording) {
+        esp_err_t ret = i2s_channel_read(rec->rx_chan, buf, BUFFER_SIZE, &bytes_read, 1000);
+        if (ret == ESP_OK && bytes_read > 0) {
+            int32_t *p = (int32_t *)buf;
+            size_t frames = bytes_read / 4;
+            samples_out = 0;
 
-    if (i2s_rx_handle) {
-        i2s_channel_disable(i2s_rx_handle);
-        i2s_del_channel(i2s_rx_handle);
-        i2s_rx_handle = NULL;
-    }
-    is_inited = false;
-    ESP_LOGI(TAG, "INMP441 deinitialized");
-}
-
-
-#define RECORD_SAMPLE_RATE  (48000)
-#define RECORD_BUFFER_SIZE  (1024)
-
-// ❗ 不再使用固定路径，改为动态
-static char current_record_file[256] = {0}; // 足够存 /sdcard/xxxxxxxxxxxx.wav
-
-static TaskHandle_t record_task_handle = NULL;
-static volatile bool is_recording = false;
-static SemaphoreHandle_t record_mutex = NULL;
-
-// WAV 头结构（保持不变）
-typedef struct {
-    char riff[4];
-    uint32_t overall_size;
-    char wave[4];
-    char fmt_chunk[4];
-    uint32_t fmt_size;
-    uint16_t audio_format;
-    uint16_t num_channels;
-    uint32_t sample_rate;
-    uint32_t byte_rate;
-    uint16_t block_align;
-    uint16_t bits_per_sample;
-    char data_chunk[4];
-    uint32_t data_size;
-} __attribute__((packed)) wav_header_t;
-
-
-static void write_initial_wav_header(FILE *fp, uint32_t sample_rate, uint32_t bits_per_sample)
-{
-    wav_header_t header = {0};
-    memcpy(header.riff, "RIFF", 4);
-    memcpy(header.wave, "WAVE", 4);
-    memcpy(header.fmt_chunk, "fmt ", 4);
-    memcpy(header.data_chunk, "data", 4);
-
-    uint32_t byte_rate = sample_rate * 1 * (bits_per_sample / 8);
-    uint16_t block_align = 1 * (bits_per_sample / 8);
-
-    header.fmt_size = 16;
-    header.audio_format = 1;          // PCM
-    header.num_channels = 1;
-    header.sample_rate = sample_rate;
-    header.byte_rate = byte_rate;
-    header.block_align = block_align;
-    header.bits_per_sample = bits_per_sample;
-
-    // 关键：data_size 设为 0xFFFFFFFF 表示“未知长度”
-    header.data_size = 0xFFFFFFFF;
-    header.overall_size = 0xFFFFFFFF; // 同样设为最大值
-
-    fwrite(&header, 1, sizeof(header), fp);
-    fflush(fp); // 确保写入
+      for (size_t i = 0; i < frames; i++) {
+    int32_t raw = p[i];             // 直接取原始32bit
+    int16_t pcm = (int16_t)(raw >> 11);  // 关键！右移11位是经过验证最合适的缩放
+    out_buf[samples_out++] = pcm;
 }
 
 
-// 录音任务：使用 current_record_file
-static void record_task(void *pvParameters)
-{
-    ESP_LOGI(TAG, "Recording task started, file: %s", current_record_file);
-
-    FILE *fp = fopen(current_record_file, "wb");
-    if (!fp) {
-        ESP_LOGE(TAG, "Failed to open file for writing: %s", current_record_file);
-        is_recording = false;
-        vTaskDelete(NULL);
-        return;
-    }
-
-    // ✅ 写入有效的初始 header（data_size = 0xFFFFFFFF）
-    write_initial_wav_header(fp, RECORD_SAMPLE_RATE, 32);
-
-    int32_t *buffer = malloc(RECORD_BUFFER_SIZE * sizeof(int32_t));
-    if (!buffer) {
-        ESP_LOGE(TAG, "Failed to allocate buffer");
-        fclose(fp);
-        is_recording = false;
-        vTaskDelete(NULL);
-        return;
-    }
-
-    uint32_t total_samples = 0;
-    const uint32_t timeout_ms = 100;
-
-    while (is_recording) {
-        size_t samples_read = inmp441_read(buffer, RECORD_BUFFER_SIZE, timeout_ms);
-        if (samples_read > 0) {
-            size_t bytes_written = fwrite(buffer, sizeof(int32_t), samples_read, fp);
-            if (bytes_written != samples_read) {
-                ESP_LOGW(TAG, "File write mismatch");
-            }
-            total_samples += samples_read;
+            fwrite(out_buf, sizeof(int16_t), samples_out, rec->file);
         } else {
-            vTaskDelay(pdMS_TO_TICKS(1));
+            ESP_LOGW(TAG, "I2S read timeout");
         }
     }
 
-    free(buffer);
-    fclose(fp); // 先关闭文件
-
-    // （可选）尝试修正文件头 —— 但 FAT32 不支持，所以跳过
-    // 如果你坚持要修正，需重新打开 r+ 模式，但风险高，不推荐
-
-    ESP_LOGI(TAG, "Recording saved. Total samples: %lu, file: %s",
-             (unsigned long)total_samples, current_record_file);
-
-    memset(current_record_file, 0, sizeof(current_record_file));
+    free(buf);
+    free(out_buf);
+    ESP_LOGI(TAG, "Recording task stopped");
     vTaskDelete(NULL);
 }
 
 
-// 【新增】按指定路径开始录音
-esp_err_t start_recording_to_file(const char *filepath)
-{
-    if (!filepath || strlen(filepath) == 0) {
-        return ESP_ERR_INVALID_ARG;
-    }
-    if (strlen(filepath) >= sizeof(current_record_file)) {
-        ESP_LOGE(TAG, "File path too long");
-        return ESP_ERR_NO_MEM;
-    }
 
-    if (is_recording) {
-        ESP_LOGW(TAG, "Already recording, stop first");
-        return ESP_ERR_INVALID_STATE;
-    }
+void inmp441_stop_record(inmp441_recorder_t *rec) {
+    if (!rec->is_recording) return;
 
-    // 创建 mutex（懒加载）
-    if (!record_mutex) {
-        record_mutex = xSemaphoreCreateMutex();
-        if (!record_mutex) {
-            ESP_LOGE(TAG, "Failed to create mutex");
-            return ESP_FAIL;
-        }
-    }
+    rec->is_recording = false;
+    vTaskDelay(pdMS_TO_TICKS(500)); // 等待缓冲区写完
+    ESP_ERROR_CHECK(i2s_channel_disable(rec->rx_chan));
 
-    if (xSemaphoreTake(record_mutex, pdMS_TO_TICKS(100)) != pdTRUE) {
-        return ESP_ERR_TIMEOUT;
-    }
+    long file_size = ftell(rec->file);
+    fseek(rec->file, 4, SEEK_SET);
+    uint32_t riff_size = file_size - 8;
+    fwrite(&riff_size, 4, 1, rec->file);
+    fseek(rec->file, 40, SEEK_SET);
+    uint32_t data_size = file_size - 44;
+    fwrite(&data_size, 4, 1, rec->file);
 
-    strncpy(current_record_file, filepath, sizeof(current_record_file) - 1);
+    fclose(rec->file);
+    rec->file = NULL;
 
-    if (!inmp441_init(RECORD_SAMPLE_RATE)) {
-        ESP_LOGE(TAG, "Failed to initialize INMP441");
-        xSemaphoreGive(record_mutex);
-        return ESP_FAIL;
-    }
-
-    is_recording = true;
-    xSemaphoreGive(record_mutex);
-
-    BaseType_t ret = xTaskCreate(
-        record_task,
-        "record_task",
-        4096,
-        NULL,
-        tskIDLE_PRIORITY + 2,
-        &record_task_handle
-    );
-
-    if (ret != pdPASS) {
-        ESP_LOGE(TAG, "Failed to create recording task");
-        inmp441_deinit();
-        is_recording = false;
-        memset(current_record_file, 0, sizeof(current_record_file));
-        return ESP_FAIL;
-    }
-
-    ESP_LOGI(TAG, "Recording started to: %s", filepath);
-    return ESP_OK;
+    ESP_LOGI(TAG, "Recording saved to %s, size: %ld bytes", rec->filepath, file_size);
 }
-
-// 保留原有接口（可选）
-esp_err_t start_recording(void)
-{
-    return start_recording_to_file("/sdcard/record.wav");
-}
-
-// 停止录音（通用）
-esp_err_t stop_recording(void)
-{
-    if (!is_recording) {
-        return ESP_ERR_INVALID_STATE;
-    }
-
-    is_recording = false;
-
-    if (record_task_handle) {
-        // 等待任务结束（最多 2 秒）
-        for (int i = 0; i < 20; i++) {
-            eTaskState state = eTaskGetState(record_task_handle);
-            if (state == eDeleted || state == eInvalid) break;
-            vTaskDelay(pdMS_TO_TICKS(100));
-        }
-        record_task_handle = NULL;
-    }
-
-    inmp441_deinit();
-    ESP_LOGI(TAG, "Recording stopped");
-    return ESP_OK;
-}
-
-// 【新增】查询是否正在录音
-bool is_recording_active(void)
-{
-    return is_recording;
-}
-
-
