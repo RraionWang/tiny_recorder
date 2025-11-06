@@ -29,7 +29,7 @@ void app_main(void)
     ESP_ERROR_CHECK(app_lvgl_init());
 
 
-   rc522_reader_init();
+ 
 
     ui_init() ; 
 
@@ -41,7 +41,9 @@ void app_main(void)
     wav_player_init();
     wav_player_play("/sdcard/canon.wav") ;
 
-    
+      rc522_reader_init();
+
+
 
     while(1){
         ui_tick();

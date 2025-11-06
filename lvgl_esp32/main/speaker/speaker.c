@@ -77,98 +77,91 @@ static void reconfigure_sample_rate(uint32_t new_rate)
 }
 
 /* === 播放 WAV 文件 === */
+/* === 播放 WAV 文件（修复版：使用静态缓冲区，避免堆损坏）=== */
 void wav_player_play(const char *path)
 {
+    // 使用静态缓冲区，确保生命周期覆盖整个播放过程，且位于内部 RAM（DMA-safe）
+    static uint8_t buf[BUFFER_SIZE];
+    static int16_t mono_buf[BUFFER_SIZE / 2];  // 最多处理 BUFFER_SIZE/2 个 16-bit 样点
+
     FILE *fp = fopen(path, "rb");
     if (!fp) {
-        printf("❌ 打开文件失败: %s\n", path);
+        ESP_LOGE(TAG, "❌ 打开文件失败: %s", path);
         return;
     }
 
     wav_header_t header;
     if (fread(&header, sizeof(wav_header_t), 1, fp) != 1) {
-        printf("❌ 读取 WAV 头失败\n");
+        ESP_LOGE(TAG, "❌ 读取 WAV 头失败");
         fclose(fp);
         return;
     }
 
-    printf("🎵 WAV: %lu Hz, %u bit, %u ch\n",
-           (unsigned long)header.sample_rate,
-           header.bits_per_sample,
-           header.num_channels);
+    ESP_LOGI(TAG, "🎵 WAV: %lu Hz, %u bit, %u ch",
+             (unsigned long)header.sample_rate,
+             header.bits_per_sample,
+             header.num_channels);
 
     if (header.audio_format != 1 || header.bits_per_sample != 16) {
-        printf("⚠️ 仅支持 16-bit PCM WAV\n");
+        ESP_LOGW(TAG, "⚠️ 仅支持 16-bit PCM WAV");
         fclose(fp);
         return;
     }
 
     if (header.sample_rate != DEFAULT_SAMPLE_RATE) {
         reconfigure_sample_rate(header.sample_rate);
-        printf("🔧 重新配置 I2S 采样率为 %lu Hz\n", (unsigned long)header.sample_rate);
-    }
-
-    uint8_t *buf = malloc(BUFFER_SIZE);
-    int16_t *mono_buf = malloc(BUFFER_SIZE / 2);
-    if (!buf || !mono_buf) {
-        printf("❌ 内存分配失败\n");
-        free(buf);
-        free(mono_buf);
-        fclose(fp);
-        return;
+        ESP_LOGI(TAG, "🔧 重新配置 I2S 采样率为 %lu Hz", (unsigned long)header.sample_rate);
     }
 
     const float volume = 0.6f;
     size_t bytes_read, bytes_written;
 
-    // gpio_set_level(AMP_SD_PIN, 1);
-    vTaskDelay(pdMS_TO_TICKS(100));
+    vTaskDelay(pdMS_TO_TICKS(100)); // 给功放/硬件一点启动时间（如有）
 
     while ((bytes_read = fread(buf, 1, BUFFER_SIZE, fp)) > 0) {
         size_t samples_out = 0;
+
         if (header.num_channels == 2) {
             int16_t *p = (int16_t *)buf;
-            size_t frames = bytes_read / 4;
-            for (size_t i = 0; i < frames; i++) {
+            size_t frames = bytes_read / 4; // 2 channels × 2 bytes
+            for (size_t i = 0; i < frames && i < BUFFER_SIZE / 4; i++) {
                 float mixed = (p[2 * i] + p[2 * i + 1]) * 0.5f * volume;
-                if (mixed > 32767) mixed = 32767;
-                if (mixed < -32768) mixed = -32768;
+                if (mixed > 32767.0f) mixed = 32767.0f;
+                if (mixed < -32768.0f) mixed = -32768.0f;
                 mono_buf[samples_out++] = (int16_t)mixed;
             }
         } else {
             int16_t *p = (int16_t *)buf;
             size_t samples = bytes_read / 2;
-            for (size_t i = 0; i < samples; i++) {
+            for (size_t i = 0; i < samples && i < BUFFER_SIZE / 2; i++) {
                 float s = p[i] * volume;
-                if (s > 32767) s = 32767;
-                if (s < -32768) s = -32768;
+                if (s > 32767.0f) s = 32767.0f;
+                if (s < -32768.0f) s = -32768.0f;
                 mono_buf[samples_out++] = (int16_t)s;
             }
         }
 
-        i2s_channel_write(tx_chan, mono_buf, samples_out * sizeof(int16_t), &bytes_written, portMAX_DELAY);
+        // 阻塞写入，等待 DMA 描述符入队（注意：不等于播放完成，但静态 buffer 安全）
+        esp_err_t ret = i2s_channel_write(tx_chan, mono_buf, samples_out * sizeof(int16_t), &bytes_written, portMAX_DELAY);
+        if (ret != ESP_OK) {
+            ESP_LOGE(TAG, "I2S 写入失败: %s", esp_err_to_name(ret));
+            break;
+        }
     }
 
-    // gpio_set_level(AMP_SD_PIN, 0);
-    free(buf);
-    free(mono_buf);
+    // 可选：等待传输完成（更严谨）
+    // 注意：ESP-IDF v5.5 的 I2S channel API 暂无直接 flush，但关闭再开启可清空 FIFO
+    i2s_channel_disable(tx_chan);
+    i2s_channel_enable(tx_chan);
+
     fclose(fp);
-    printf("✅ 播放结束\n");
+    ESP_LOGI(TAG, "✅ 播放结束: %s", path);
 }
 
 /* === 初始化函数 === */
 bool wav_player_init(void)
 {
-    // // 配置功放使能引脚（如有）
-    // gpio_config_t io_conf = {
-    //     .mode = GPIO_MODE_OUTPUT,
-    //     // .pin_bit_mask = 1ULL << AMP_SD_PIN,
-    // };
-    // gpio_config(&io_conf);
-    // gpio_set_level(AMP_SD_PIN, 0);
-
-    // printf("🧩 初始化 SD 卡...\n");
-    // sd_init();
+   
 
     printf("🎧 初始化 I2S...\n");
     if (i2s_init(DEFAULT_SAMPLE_RATE) != ESP_OK) {

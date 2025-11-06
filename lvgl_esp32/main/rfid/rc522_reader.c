@@ -10,6 +10,8 @@
 #include "rc522_picc.h"
 #include "rc522_reader.h"
 #include "pin_cng.h"
+#include "speaker.h"
+#include "recorder.h"
 
 static const char *TAG = "RC522_READER";
 
@@ -20,32 +22,106 @@ static SemaphoreHandle_t g_card_mutex = NULL;
 static rc522_driver_handle_t driver;
 static rc522_handle_t scanner;
 
+#define MAX_UID_HEX_LEN 24  // 最多支持 12 字节 UID（实际一般 ≤10）
+static char g_current_uid[RC522_PICC_UID_STR_BUFFER_SIZE_MAX] = {0};
+static bool g_is_recording_for_card = false;
+
+// 将 rc522_uid_t 转为连续 hex 字符串（无空格）
+static void uid_to_hex_str(const rc522_picc_uid_t *uid, char *out_str, size_t out_size)
+{
+    if (!uid || !out_str || out_size < (uid->length * 2 + 1)) {
+        if (out_str && out_size > 0) out_str[0] = '\0';
+        return;
+    }
+
+    for (uint8_t i = 0; i < uid->length; i++) {
+        snprintf(&out_str[i * 2], out_size - i * 2, "%02X", uid->value[i]);
+    }
+}
 
 
-// 直接在回调函数中写
-// 卡片状态变化回调
+static bool file_exists(const char *path) {
+    FILE *f = fopen(path, "rb");
+    if (f) { fclose(f); return true; }
+    return false;
+}
+
+// 播放任务：接收 filepath 的副本
+static void play_wav_task(void *pvParam)
+{
+    char *filepath = (char *)pvParam;
+    ESP_LOGI("Audio", "▶️ 开始播放: %s", filepath);
+    
+    wav_player_play(filepath); // 假设这个函数会阻塞直到播放结束
+    
+    free(filepath); // 因为是从 strdup 分配的
+    vTaskDelete(NULL);
+}
+
+
+
 static void on_picc_state_changed(void *arg, esp_event_base_t base, int32_t event_id, void *data)
 {
     rc522_picc_state_changed_event_t *event = (rc522_picc_state_changed_event_t *)data;
     rc522_picc_t *picc = event->picc;
 
-    // 回调中通常不会被抢占，可使用 portMAX_DELAY（但建议仍加超时防御）
-    if (xSemaphoreTake(g_card_mutex, pdMS_TO_TICKS(100)) == pdTRUE) {
-        if (picc->state == RC522_PICC_STATE_ACTIVE) {
-                char uid_str[RC522_PICC_UID_STR_BUFFER_SIZE_MAX];
-    ESP_ERROR_CHECK(rc522_picc_uid_to_str(&picc->uid, uid_str, sizeof(uid_str)));
-            ESP_LOGI(TAG, "✅ 检测到卡片%u 卡片的uid是%s", (unsigned int)esp_log_timestamp(),uid_str);
-       
-        } else if (picc->state == RC522_PICC_STATE_IDLE && event->old_state >= RC522_PICC_STATE_ACTIVE) {
-            ESP_LOGI(TAG, "💨 卡片已移开%u ms", (unsigned int)esp_log_timestamp());
-          
+    if (xSemaphoreTake(g_card_mutex, pdMS_TO_TICKS(100)) != pdTRUE) {
+        ESP_LOGE("RFID", "Mutex timeout");
+        return;
+    }
+
+    if (picc->state == RC522_PICC_STATE_ACTIVE) {
+        // ✅ 使用无空格的 HEX 字符串
+        char uid_hex[32] = {0};
+        for (uint8_t i = 0; i < picc->uid.length && i < 10; i++) {
+            snprintf(&uid_hex[i * 2], sizeof(uid_hex) - i * 2, "%02X", picc->uid.value[i]);
+        }
+
+        char filepath[128];
+        snprintf(filepath, sizeof(filepath), "/sdcard/%s.wav", uid_hex);
+
+        ESP_LOGI("RFID", "检测到卡片，UID: %s", uid_hex);
+
+        if (file_exists(filepath)) {
+            ESP_LOGI("RFID", "🔊 播放录音: %s", filepath);
+            // 启动播放任务...
+
+
+             char *path_copy = strdup(filepath);
+            if (path_copy && xTaskCreate(play_wav_task, "play_wav", 4096, path_copy, 5, NULL) != pdPASS) {
+                ESP_LOGE("RFID", "创建播放任务失败");
+                free(path_copy);
+            }
+
+
+        } else {
+            
+             ESP_LOGI("RFID", "⏺️ 开始录音到: %s", filepath);
+    
+    esp_err_t err = start_recording_to_file(filepath);
+    if (err != ESP_OK) {
+        ESP_LOGE("RFID", "❌ 录音启动失败: %s", esp_err_to_name(err));
+        // 不设置 g_is_recording_for_card，避免后续错误停止
+    } else {
+        strncpy(g_current_uid, uid_hex, sizeof(g_current_uid) - 1);
+        g_current_uid[sizeof(g_current_uid) - 1] = '\0';
+        g_is_recording_for_card = true;
+    }
+
 
         }
-        xSemaphoreGive(g_card_mutex);
-    } else {
-        ESP_LOGE(TAG, "回调中获取 mutex 超时！");
+
+    } else if (picc->state == RC522_PICC_STATE_IDLE && event->old_state >= RC522_PICC_STATE_ACTIVE) {
+        if (g_is_recording_for_card) {
+            stop_recording();
+            g_is_recording_for_card = false;
+            memset(g_current_uid, 0, sizeof(g_current_uid));
+        }
     }
+
+    xSemaphoreGive(g_card_mutex);
 }
+
 
 void rc522_reader_init(void)
 {
