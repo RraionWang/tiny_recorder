@@ -12,6 +12,8 @@
 #include "ui.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "speaker.h"
+#include "recorder.h"
 
 
 
@@ -36,9 +38,20 @@ void app_main(void)
     sd_wr_test() ; 
     ui_tick() ; 
 
+    wav_player_init();
+    wav_player_play("/sdcard/canon.wav") ;
+
+    
+
     while(1){
         ui_tick();
         vTaskDelay(pdMS_TO_TICKS(10));
     }
+
+
+
+    
+
+    
     
 }

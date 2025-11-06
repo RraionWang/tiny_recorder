@@ -13,10 +13,15 @@ idf_component_register(SRCS "main.c"
                              "ui/vars.c"
                              "sdcard/sdcard.c"
                              "lcd/lcd.c"
+                             "speaker/speaker.c"
+                             "recorder/recorder.c"
+
                             
                     INCLUDE_DIRS "."
                                  "sdcard"
                                  "ui"
                                  "led"
                                  "rfid"
-                                 "lcd")
+                                 "lcd"
+                                 "speaker"
+                                 "recorder")

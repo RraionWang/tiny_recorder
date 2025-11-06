@@ -1,15 +1,20 @@
-// inmp441.c
-#include "recorder.h"
-#include "driver/i2s_std.h"
+
+#include <stdio.h>
+#include <stdbool.h>
+#include <string.h>
+
+// 必须包含 ESP-IDF 的基础头文件，它会自动引入 FreeRTOS 类型定义
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "freertos/queue.h"        // 如果用到队列
+#include "driver/i2s_std.h"        // 根据你用的 I2S 驱动版本调整
 #include "esp_log.h"
 
 static const char *TAG = "inmp441";
 
-// === 可根据硬件修改这些引脚 ===
-#define I2S_BCLK_PIN   GPIO_NUM_7
-#define I2S_WS_PIN     GPIO_NUM_48
-#define I2S_DIN_PIN    GPIO_NUM_16   // 注意：这是麦克风的 DOUT 输入到 ESP32-S3
-
+#define I2S_BCLK_PIN   GPIO_NUM_4
+#define I2S_WS_PIN     GPIO_NUM_5
+#define I2S_DIN_PIN    GPIO_NUM_6
 #define I2S_PORT       I2S_NUM_0
 
 static i2s_chan_handle_t i2s_rx_handle = NULL;
@@ -22,20 +27,30 @@ bool inmp441_init(uint32_t sample_rate)
         return true;
     }
 
-    // 创建 I2S 通道（仅 RX）
+    // 1. 创建 I2S RX 通道
     i2s_chan_config_t chan_cfg = I2S_CHANNEL_DEFAULT_CONFIG(I2S_PORT, I2S_ROLE_MASTER);
     chan_cfg.dma_desc_num = 4;
-    chan_cfg.dma_frame_num = 128; // 每个 DMA 缓冲区 128 帧
+    chan_cfg.dma_frame_num = 128;
     esp_err_t ret = i2s_new_channel(&chan_cfg, &i2s_rx_handle, NULL);
     if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "Failed to create I2S channel: %s", esp_err_to_name(ret));
+        ESP_LOGE(TAG, "i2s_new_channel failed: %s", esp_err_to_name(ret));
         return false;
     }
 
-    // 配置标准 I2S 模式（用于麦克风）
+    // 2. 使用宏初始化 slot_cfg（注意：只有 2 个参数！）
+    i2s_std_slot_config_t slot_cfg = I2S_STD_PHILIPS_SLOT_DEFAULT_CONFIG(
+        I2S_DATA_BIT_WIDTH_32BIT,
+        I2S_SLOT_MODE_MONO
+    );
+
+    // 手动覆盖关键字段以适配 INMP441
+    slot_cfg.slot_mask = I2S_STD_SLOT_LEFT;  // 或 I2S_STD_SLOT_RIGHT，取决于 L/R 引脚接法
+    slot_cfg.bit_shift = false;              // 关键：保持 24-bit 左对齐在 32-bit 中
+    // 注意：v5.5 中没有 msb_first 字段，默认就是 MSB first（Philips 模式）
+
     i2s_std_config_t std_cfg = {
-        .clk_cfg = i2s_std_clk_config_default(sample_rate),
-        .slot_cfg = I2S_STD_SLOT_DEFAULT_CONFIG(I2S_DATA_BIT_WIDTH_32BIT, I2S_SLOT_MODE_MONO, I2S_STD_SLOT_MASK_ALL),
+        .clk_cfg = I2S_STD_CLK_DEFAULT_CONFIG(sample_rate),
+        .slot_cfg = slot_cfg,
         .gpio_cfg = {
             .mclk = I2S_GPIO_UNUSED,
             .bclk = I2S_BCLK_PIN,
@@ -50,18 +65,9 @@ bool inmp441_init(uint32_t sample_rate)
         },
     };
 
-    // 关键配置：INMP441 输出 24-bit 数据左对齐在 32-bit 中
-    std_cfg.slot_cfg.data_bit_width = I2S_DATA_BIT_WIDTH_32BIT;
-    std_cfg.slot_cfg.slot_bit_width = I2S_SLOT_BIT_WIDTH_32BIT;
-    std_cfg.slot_cfg.slot_mode = I2S_SLOT_MODE_MONO;
-    std_cfg.slot_cfg.ws_width = I2S_WS_WIDTH_SLOT;
-    std_cfg.slot_cfg.ws_pol = I2S_WS_POL_HIGH;   // INMP441: WS=1 表示左声道（单声道无影响）
-    std_cfg.slot_cfg.bit_shift = false;          // 不移位（保持左对齐）
-    std_cfg.slot_cfg.msb_right = false;          // MSB first（标准 I2S）
-
     ret = i2s_channel_init_std_mode(i2s_rx_handle, &std_cfg);
     if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "Failed to init I2S std mode: %s", esp_err_to_name(ret));
+        ESP_LOGE(TAG, "i2s_channel_init_std_mode failed: %s", esp_err_to_name(ret));
         i2s_del_channel(i2s_rx_handle);
         i2s_rx_handle = NULL;
         return false;
@@ -69,7 +75,7 @@ bool inmp441_init(uint32_t sample_rate)
 
     ret = i2s_channel_enable(i2s_rx_handle);
     if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "Failed to enable I2S channel: %s", esp_err_to_name(ret));
+        ESP_LOGE(TAG, "i2s_channel_enable failed: %s", esp_err_to_name(ret));
         i2s_del_channel(i2s_rx_handle);
         i2s_rx_handle = NULL;
         return false;

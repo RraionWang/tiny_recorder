@@ -11,20 +11,19 @@
 #include "esp_vfs_fat.h"
 #include "sdmmc_cmd.h"
 #include "driver/spi_common.h"
+#include "pin_cng.h"
+#include "sdcard.h"
 
 /* ========= 引脚定义 ========= */
-#define I2S_BCLK    7
-#define I2S_LRCLK   8
-#define I2S_DOUT    9
-#define AMP_SD_PIN  10          // 可选：若模块有使能引脚则使用，否则可忽略
-
-#define SD_MOSI     13
-#define SD_MISO     14
-#define SD_SCK      12
-#define SD_CS       11
+#define I2S_BCLK    13
+#define I2S_LRCLK   14
+#define I2S_DOUT    12
+// #define AMP_SD_PIN  -1          // 可选：若模块有使能引脚则使用，否则可忽略
 
 #define DEFAULT_SAMPLE_RATE 44100
 #define BUFFER_SIZE         4096
+
+static const char* TAG = "NS4168" ; 
 
 static i2s_chan_handle_t tx_chan = NULL;
 
@@ -45,38 +44,6 @@ typedef struct {
     uint32_t data_size;
 } wav_header_t;
 
-/* === SD 卡初始化 === */
-static esp_err_t sdcard_init(void)
-{
-    esp_err_t ret;
-    sdmmc_host_t host = SDSPI_HOST_DEFAULT();
-    spi_bus_config_t bus_cfg = {
-        .mosi_io_num = SD_MOSI,
-        .miso_io_num = SD_MISO,
-        .sclk_io_num = SD_SCK,
-        .quadwp_io_num = -1,
-        .quadhd_io_num = -1,
-        .max_transfer_sz = 4000,
-    };
-    ret = spi_bus_initialize(host.slot, &bus_cfg, SPI_DMA_CH_AUTO);
-    if (ret != ESP_OK) return ret;
-
-    sdspi_device_config_t slot_cfg = SDSPI_DEVICE_CONFIG_DEFAULT();
-    slot_cfg.gpio_cs = SD_CS;
-    slot_cfg.host_id = host.slot;
-
-    esp_vfs_fat_sdmmc_mount_config_t mount_cfg = {
-        .format_if_mount_failed = false,
-        .max_files = 5,
-    };
-
-    sdmmc_card_t *card;
-    ret = esp_vfs_fat_sdspi_mount("/sdcard", &host, &slot_cfg, &mount_cfg, &card);
-    if (ret == ESP_OK) {
-        sdmmc_card_print_info(stdout, card);
-    }
-    return ret;
-}
 
 /* === I2S 初始化 === */
 static esp_err_t i2s_init(uint32_t sample_rate)
@@ -154,7 +121,7 @@ void wav_player_play(const char *path)
     const float volume = 0.6f;
     size_t bytes_read, bytes_written;
 
-    gpio_set_level(AMP_SD_PIN, 1);
+    // gpio_set_level(AMP_SD_PIN, 1);
     vTaskDelay(pdMS_TO_TICKS(100));
 
     while ((bytes_read = fread(buf, 1, BUFFER_SIZE, fp)) > 0) {
@@ -182,7 +149,7 @@ void wav_player_play(const char *path)
         i2s_channel_write(tx_chan, mono_buf, samples_out * sizeof(int16_t), &bytes_written, portMAX_DELAY);
     }
 
-    gpio_set_level(AMP_SD_PIN, 0);
+    // gpio_set_level(AMP_SD_PIN, 0);
     free(buf);
     free(mono_buf);
     fclose(fp);
@@ -192,16 +159,16 @@ void wav_player_play(const char *path)
 /* === 初始化函数 === */
 bool wav_player_init(void)
 {
-    // 配置功放使能引脚（如有）
-    gpio_config_t io_conf = {
-        .mode = GPIO_MODE_OUTPUT,
-        .pin_bit_mask = 1ULL << AMP_SD_PIN,
-    };
-    gpio_config(&io_conf);
-    gpio_set_level(AMP_SD_PIN, 0);
+    // // 配置功放使能引脚（如有）
+    // gpio_config_t io_conf = {
+    //     .mode = GPIO_MODE_OUTPUT,
+    //     // .pin_bit_mask = 1ULL << AMP_SD_PIN,
+    // };
+    // gpio_config(&io_conf);
+    // gpio_set_level(AMP_SD_PIN, 0);
 
-    printf("🧩 初始化 SD 卡...\n");
-    ESP_ERROR_CHECK_WITHOUT_ABORT(sdcard_init());
+    // printf("🧩 初始化 SD 卡...\n");
+    // sd_init();
 
     printf("🎧 初始化 I2S...\n");
     if (i2s_init(DEFAULT_SAMPLE_RATE) != ESP_OK) {

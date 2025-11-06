@@ -22,7 +22,7 @@
 #define EXAMPLE_LCD_GPIO_MOSI       (GPIO_NUM_10)
 #define EXAMPLE_LCD_GPIO_RST        (GPIO_NUM_8)
 #define EXAMPLE_LCD_GPIO_DC         (GPIO_NUM_9)
-#define EXAMPLE_LCD_GPIO_CS         (GPIO_NUM_6)
+#define EXAMPLE_LCD_GPIO_CS         (GPIO_NUM_3)
 #define EXAMPLE_LCD_GPIO_BL         (GPIO_NUM_7)
 
 //编码器

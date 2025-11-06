@@ -104,6 +104,6 @@ void sd_wr_test(void)
     }
 
     // 卸载
-    esp_vfs_fat_sdcard_unmount(MOUNT_POINT, card);
-    ESP_LOGI(TAG, "Card unmounted, example complete.");
+    // esp_vfs_fat_sdcard_unmount(MOUNT_POINT, card);
+    // ESP_LOGI(TAG, "Card unmounted, example complete.");
 }
