@@ -8,6 +8,9 @@
 #define RC522_SCANNER_GPIO_SDA     (45)
 #define RC522_SCANNER_GPIO_RST     (17)
 
+
+
+
 //sd卡
 
 #define SD_CLK (39)

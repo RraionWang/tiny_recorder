@@ -37,7 +37,7 @@ static esp_lcd_panel_handle_t lcd_panel = NULL;
 static lv_display_t *lvgl_disp = NULL;
 
 /* 初始化 LCD */
- esp_err_t app_lcd_init(void)
+esp_err_t app_lcd_init(void)
 {
     esp_err_t ret = ESP_OK;
 
@@ -66,27 +66,38 @@ static lv_display_t *lvgl_disp = NULL;
         .spi_mode = 0,
         .trans_queue_depth = 10,
     };
-    ESP_GOTO_ON_ERROR(esp_lcd_new_panel_io_spi((esp_lcd_spi_bus_handle_t)EXAMPLE_LCD_SPI_NUM, &io_config, &lcd_io), err, TAG, "New panel IO failed");
+    ESP_GOTO_ON_ERROR(esp_lcd_new_panel_io_spi((esp_lcd_spi_bus_handle_t)EXAMPLE_LCD_SPI_NUM, &io_config, &lcd_io),
+                      err, TAG, "New panel IO failed");
 
+    // ✅ 正确顺序：先创建 panel，再初始化
     const esp_lcd_panel_dev_config_t panel_config = {
         .reset_gpio_num = EXAMPLE_LCD_GPIO_RST,
 #if ESP_IDF_VERSION < ESP_IDF_VERSION_VAL(6, 0, 0)
-        .rgb_endian = LCD_RGB_ENDIAN_BGR,
+        .rgb_endian = LCD_RGB_ENDIAN_RGB,
 #else
-        .rgb_ele_order = LCD_RGB_ELEMENT_ORDER_BGR,
+        .rgb_ele_order = LCD_RGB_ELEMENT_ORDER_RGB,
 #endif
         .bits_per_pixel = EXAMPLE_LCD_BITS_PER_PIXEL,
     };
-    ESP_GOTO_ON_ERROR(esp_lcd_new_panel_st7789(lcd_io, &panel_config, &lcd_panel), err, TAG, "New panel failed");
+    ESP_GOTO_ON_ERROR(esp_lcd_new_panel_st7789(lcd_io, &panel_config, &lcd_panel),
+                      err, TAG, "New panel failed");
 
+    // ✅ 然后再 reset + init
     esp_lcd_panel_reset(lcd_panel);
     esp_lcd_panel_init(lcd_panel);
-    // esp_lcd_panel_mirror(lcd_panel, true, false);
-    esp_lcd_panel_set_gap(lcd_panel, 0, 34);  // 修正 172x320 偏移
+
+    // ✅ 显示方向修正
+    esp_lcd_panel_mirror(lcd_panel, false, true);
+    esp_lcd_panel_set_gap(lcd_panel, 0, 34);
+
+    // ✅ 关闭反色
+    esp_lcd_panel_invert_color(lcd_panel, true);
+
+    // ✅ 打开背光
+    gpio_set_level(EXAMPLE_LCD_GPIO_BL, EXAMPLE_LCD_BL_ON_LEVEL);
     esp_lcd_panel_disp_on_off(lcd_panel, true);
 
-    gpio_set_level(EXAMPLE_LCD_GPIO_BL, EXAMPLE_LCD_BL_ON_LEVEL);
-    return ret;
+    return ESP_OK;
 
 err:
     if (lcd_panel) esp_lcd_panel_del(lcd_panel);
@@ -94,6 +105,8 @@ err:
     spi_bus_free(EXAMPLE_LCD_SPI_NUM);
     return ret;
 }
+
+
 
 /* 初始化 LVGL */
  esp_err_t app_lvgl_init(void)
@@ -118,6 +131,9 @@ err:
         .flags = { .buff_dma = true, .swap_bytes = true }
     };
     lvgl_disp = lvgl_port_add_disp(&disp_cfg);
+
+
+    
 
     lv_disp_set_rotation(lvgl_disp, LV_DISPLAY_ROTATION_270);
 

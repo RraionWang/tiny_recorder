@@ -6,15 +6,17 @@ idf_component_register(SRCS "main.c"
                             "ui/images.c"
                             "ui/ui.c"
                             "led/led_control.c"
-                            "ui/ui_font_chinese_font_30.c"
-                            "ui/ui_font_chinese_font_14.c"
-                             "ui/ui_font_chinese_font_20.c"
+                            "ui/ui_font_chinese_14.c"
+                            "ui/ui_font_chinese_20.c"
+                      
                              "rfid/rc522_reader.c"
-                             "ui/vars.c"
+                         
                              "sdcard/sdcard.c"
                              "lcd/lcd.c"
                              "speaker/speaker.c"
                              "recorder/recorder.c"
+                             "ui/actions.cpp"
+                             "ui/vars.cpp"
 
                             
                     INCLUDE_DIRS "."

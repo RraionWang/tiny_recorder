@@ -20,6 +20,8 @@ enum FlowGlobalVariables {
 
 // Native global variables
 
+extern bool get_var_is_detected_rfid_new_card();
+extern void set_var_is_detected_rfid_new_card(bool value);
 
 
 #ifdef __cplusplus

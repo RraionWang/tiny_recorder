@@ -1,5 +1,5 @@
-#ifndef INMP441_H
-#define INMP441_H
+#ifndef RECORDER_H
+#define RECORDER_H
 
 #include "driver/i2s_std.h"
 #include "esp_err.h"

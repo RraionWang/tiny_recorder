@@ -1,22 +1,33 @@
-// rc522_reader.h
 #ifndef RC522_READER_H
 #define RC522_READER_H
 
-#include <stdbool.h>
+#include "esp_err.h"
+#include "rc522.h"
+#include "driver/rc522_spi.h"
+#include "rc522_picc.h"
 
-/**
- * @brief 初始化 RC522 读卡器（后台自动轮询）
- */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
+
+
+
+// 初始化 RC522 模块
 void rc522_reader_init(void);
 
-/**
- * @brief 获取当前卡片状态
- * @return true 表示有卡，false 表示无卡
- */
+// 启动卡片扫描
+esp_err_t rc522_reader_start(void);
 
-bool  rc522_get_card_status(void) ; 
-const char* rc522_get_card_uid(void);
+// 停止卡片扫描
+void rc522_reader_stop(void);
 
+// 获取当前检测到的卡片 UID（16进制字符串），若无卡返回 NULL
+const char *rc522_reader_get_uid(void);
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif // RC522_READER_H

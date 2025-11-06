@@ -12,6 +12,8 @@
 #include "pin_cng.h"
 #include "speaker.h"
 #include "recorder.h"
+#include "vars.h"
+#include "ui.h"
 
 static const char *TAG = "RC522_READER";
 
@@ -71,25 +73,38 @@ static void on_picc_state_changed(void *arg, esp_event_base_t base, int32_t even
     }
 
     if (picc->state == RC522_PICC_STATE_ACTIVE) {
-        // ✅ 使用无空格的 HEX 字符串
-        char uid_hex[32] = {0};
-        for (uint8_t i = 0; i < picc->uid.length && i < 10; i++) {
-            snprintf(&uid_hex[i * 2], sizeof(uid_hex) - i * 2, "%02X", picc->uid.value[i]);
-        }
 
-        char filepath[128];
-        snprintf(filepath, sizeof(filepath), "/sdcard/%s.wav", uid_hex);
 
-        ESP_LOGI("RFID", "检测到卡片，UID: %s", uid_hex);
+
+        ESP_LOGI("RFID", "检测到卡此时var的值是%d",get_var_is_detected_rfid_new_card());
+        set_var_is_detected_rfid_new_card(true);
+
+        
+
+        // tick_screen_detected_rfid_page(); 
+
+
+
+        // // ✅ 使用无空格的 HEX 字符串
+        // char uid_hex[32] = {0};
+        // for (uint8_t i = 0; i < picc->uid.length && i < 10; i++) {
+        //     snprintf(&uid_hex[i * 2], sizeof(uid_hex) - i * 2, "%02X", picc->uid.value[i]);
+        // }
+
+        // char filepath[128];
+        // snprintf(filepath, sizeof(filepath), "/sdcard/%s.wav", uid_hex);
+
+        // ESP_LOGI("RFID", "检测到卡片，UID: %s", uid_hex);
 
 
 
     } else if (picc->state == RC522_PICC_STATE_IDLE && event->old_state >= RC522_PICC_STATE_ACTIVE) {
-        if (g_is_recording_for_card) {
-            // stop_recording();
-            g_is_recording_for_card = false;
-            memset(g_current_uid, 0, sizeof(g_current_uid));
-        }
+        // if (g_is_recording_for_card) {
+        //     // stop_recording();
+        //     g_is_recording_for_card = false;
+        //     memset(g_current_uid, 0, sizeof(g_current_uid));
+        // }
+                set_var_is_detected_rfid_new_card(false);
     }
 
     xSemaphoreGive(g_card_mutex);

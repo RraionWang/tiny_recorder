@@ -2,6 +2,7 @@
 #include "rc522.h"
 #include "driver/rc522_spi.h"
 #include "rc522_picc.h"
+#include "vars.h"
 
 static const char *TAG = "rc522-basic-example";
 
@@ -34,6 +35,8 @@ static void on_picc_state_changed(void *arg, esp_event_base_t base, int32_t even
 
     if (picc->state == RC522_PICC_STATE_ACTIVE) {
         rc522_picc_print(picc);
+    
+
     }
     else if (picc->state == RC522_PICC_STATE_IDLE && event->old_state >= RC522_PICC_STATE_ACTIVE) {
         ESP_LOGI(TAG, "Card has been removed");

@@ -5,7 +5,7 @@
   "idf.openOcdConfigs": [
     "board/esp32s3-builtin.cfg"
   ],
-  "idf.portWin": "COM7",
+  "idf.portWin": "COM5",
   "idf.toolsPathWin": "C:\\Users\\15768\\.espressif",
   "idf.customExtraVars": {
     "IDF_TARGET": "esp32s3"
@@ -45,6 +45,10 @@
     "esp_lcd_panel_vendor.h": "c",
     "esp_lcd_panel_io.h": "c",
     "esp_task.h": "c",
-    "freertosconfig.h": "c"
+    "freertosconfig.h": "c",
+    "bitset": "c",
+    "string_view": "c",
+    "initializer_list": "c",
+    "span": "c"
   }
 }
