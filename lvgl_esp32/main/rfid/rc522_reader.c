@@ -76,8 +76,9 @@ static void on_picc_state_changed(void *arg, esp_event_base_t base, int32_t even
 
 
 
-        ESP_LOGI("RFID", "检测到卡此时var的值是%d",get_var_is_detected_rfid_new_card());
+        ESP_LOGI("RFID", "检测到卡片了");
         set_var_is_detected_rfid_new_card(true);
+        ESP_LOGI("RFID", "变量设置为 %d", get_var_is_detected_rfid_new_card());
 
         
 
@@ -104,7 +105,7 @@ static void on_picc_state_changed(void *arg, esp_event_base_t base, int32_t even
         //     g_is_recording_for_card = false;
         //     memset(g_current_uid, 0, sizeof(g_current_uid));
         // }
-                set_var_is_detected_rfid_new_card(false);
+                // set_var_is_detected_rfid_new_card(false);
     }
 
     xSemaphoreGive(g_card_mutex);
