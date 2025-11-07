@@ -8,9 +8,6 @@
 #define RC522_SCANNER_GPIO_SDA     (45)
 #define RC522_SCANNER_GPIO_RST     (17)
 
-
-
-
 //sd卡
 
 #define SD_CLK (39)
@@ -32,6 +29,13 @@
 #define ENCODER_A_PIN       GPIO_NUM_2
 #define ENCODER_B_PIN       GPIO_NUM_1
 #define ENCODER_BTN_PIN     GPIO_NUM_46
+
+
+//inmp441 
+// GPIO 引脚定义（按你实际接线修改）
+#define INMP441_I2S_BCLK_PIN        GPIO_NUM_4
+#define INMP441_I2S_WS_PIN          GPIO_NUM_5
+#define INMP441_I2S_DIN_PIN         GPIO_NUM_6
 
 
 #endif

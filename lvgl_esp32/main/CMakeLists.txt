@@ -15,7 +15,8 @@ idf_component_register(SRCS "main.c"
                              "lcd/lcd.c"
                              "speaker/speaker.c"
                              "recorder/recorder.c"
-                             "ui/actions.cpp"
+                             "recorder/recorder_control.c" 
+                             "ui/actions.c"
                              "ui/vars.cpp"
 
                             

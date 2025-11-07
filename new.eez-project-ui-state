@@ -1,11 +1,9 @@
 {
   "navigation": {
-    "selectedUserPageObject": "[..\\Desktop\\test.eez-project]:/userPages/0",
-    "selectedActionObject": "[..\\Desktop\\test.eez-project]:/actions/4",
-    "selectedGlobalVariableObject": "[..\\Desktop\\test.eez-project]:/variables/globalVariables/0",
-    "selectedFontObject": "[..\\Desktop\\test.eez-project]:/fonts/1",
+    "selectedUserPageObject": "[new.eez-project]:/userPages/5",
+    "selectedGlobalVariableObject": "[new.eez-project]:/variables/globalVariables/1",
     "subnavigationSelectedItems": {
-      "variables-tab/sub-navigation/selected-item": "Widgets"
+      "variables-tab/sub-navigation/selected-item": "Global"
     }
   },
   "layoutModel": {
@@ -202,51 +200,16 @@
               "type": "tabset",
               "id": "EDITORS",
               "weight": 49.5755337021993,
-              "selected": 3,
               "enableDeleteWhenEmpty": false,
               "enableClose": false,
               "children": [
                 {
                   "type": "tab",
-                  "id": "#5ea47fa4-eeab-4c15-a84a-b62cb92bef16",
-                  "name": "test",
+                  "id": "#cb348982-9281-4b2c-a6af-3a0c8a0360ea",
+                  "name": "play_existed_record",
                   "component": "editor",
                   "config": {
-                    "objectPath": "[..\\Desktop\\test.eez-project]:/actions/4",
-                    "permanent": false
-                  },
-                  "icon": "material:code"
-                },
-                {
-                  "type": "tab",
-                  "id": "#528090c7-798f-45ab-b1b7-a628d4961dc4",
-                  "name": "chinese_20",
-                  "component": "editor",
-                  "config": {
-                    "objectPath": "[..\\Desktop\\test.eez-project]:/fonts/1",
-                    "permanent": false
-                  },
-                  "icon": "material:font_download"
-                },
-                {
-                  "type": "tab",
-                  "id": "#7faa7fa2-5ad0-491c-9385-2edad5df67b1",
-                  "name": "Settings",
-                  "component": "editor",
-                  "config": {
-                    "objectPath": "[..\\Desktop\\test.eez-project]:/settings",
-                    "subObjectPath": "[..\\Desktop\\test.eez-project]:/settings",
-                    "permanent": false
-                  },
-                  "icon": "material:settings"
-                },
-                {
-                  "type": "tab",
-                  "id": "#3cf9fe52-70a8-4e5e-b4c1-d9adb57975e4",
-                  "name": "main",
-                  "component": "editor",
-                  "config": {
-                    "objectPath": "[..\\Desktop\\test.eez-project]:/userPages/0",
+                    "objectPath": "[new.eez-project]:/userPages/5",
                     "permanent": false
                   },
                   "icon": "svg:page"
@@ -491,17 +454,17 @@
             {
               "type": "tabset",
               "id": "RUNTIME-EDITORS",
-              "weight": 0.6896984924623115,
+              "weight": 0.5414572864321608,
               "enableDeleteWhenEmpty": false,
               "enableClose": false,
               "children": [
                 {
                   "type": "tab",
-                  "id": "#d8940054-42b6-4294-ad76-3727412706cc",
-                  "name": "main",
+                  "id": "#55887fb1-e910-41c3-9261-57fbfef9662c",
+                  "name": "sdcard_file_page",
                   "component": "editor",
                   "config": {
-                    "objectPath": "[..\\Desktop\\test.eez-project]:/userPages/0",
+                    "objectPath": "[new.eez-project]:/userPages/4",
                     "permanent": false
                   },
                   "icon": "svg:page"
@@ -512,8 +475,8 @@
             {
               "type": "row",
               "id": "#7a4035c1-b0a4-4f6e-a722-8a463aa35116",
-              "weight": 0.3103015075376884,
-              "width": 494,
+              "weight": 0.4585427135678392,
+              "width": 730,
               "children": [
                 {
                   "type": "tabset",
@@ -1548,6 +1511,135 @@
         },
         "scale": 1
       }
+    },
+    "[new.eez-project]:/userPages/0[flow-state]": {
+      "selection": {
+        "0": {}
+      },
+      "transform": {
+        "translate": {
+          "x": -333.8900000000001,
+          "y": -290.52500000000003
+        },
+        "scale": 0.9
+      },
+      "timeline": {
+        "isEditorActive": false,
+        "position": 0,
+        "secondToPx": 200,
+        "scrollLeft": 0
+      }
+    },
+    "[new.eez-project]:/actions/4[flow-state]": {
+      "selection": {},
+      "transform": {
+        "translate": {
+          "x": -205,
+          "y": -45
+        },
+        "scale": 1
+      }
+    },
+    "[new.eez-project]:/actions/2[flow-state]": {
+      "selection": {},
+      "transform": {
+        "translate": {
+          "x": 0,
+          "y": 0
+        },
+        "scale": 1
+      }
+    },
+    "[new.eez-project]:/userPages/1[flow-state]": {
+      "selection": {
+        "0": {},
+        "1": {
+          "$selected": true
+        }
+      },
+      "transform": {
+        "translate": {
+          "x": -315,
+          "y": -205
+        },
+        "scale": 0.9
+      },
+      "timeline": {
+        "isEditorActive": false,
+        "position": 0,
+        "secondToPx": 200,
+        "scrollLeft": 0
+      }
+    },
+    "[new.eez-project]:/userPages/3[flow-state]": {
+      "selection": {
+        "0": {
+          "1": {}
+        }
+      },
+      "transform": {
+        "translate": {
+          "x": -373,
+          "y": -247
+        },
+        "scale": 0.9
+      },
+      "timeline": {
+        "isEditorActive": false,
+        "position": 0,
+        "secondToPx": 200,
+        "scrollLeft": 0
+      }
+    },
+    "[new.eez-project]:/userPages/4[flow-state]": {
+      "selection": {},
+      "transform": {
+        "translate": {
+          "x": -160,
+          "y": -86
+        },
+        "scale": 0.9
+      },
+      "timeline": {
+        "isEditorActive": false,
+        "position": 0,
+        "secondToPx": 200,
+        "scrollLeft": 0
+      }
+    },
+    "[new.eez-project]:/userPages/2[flow-state]": {
+      "selection": {},
+      "transform": {
+        "translate": {
+          "x": -272,
+          "y": -167
+        },
+        "scale": 0.9
+      },
+      "timeline": {
+        "isEditorActive": false,
+        "position": 0,
+        "secondToPx": 200,
+        "scrollLeft": 0
+      }
+    },
+    "[new.eez-project]:/userPages/5[flow-state]": {
+      "selection": {
+        "0": {}
+      },
+      "transform": {
+        "translate": {
+          "x": -155,
+          "y": -138
+        },
+        "scale": 0.9
+      },
+      "timeline": {
+        "isEditorActive": false,
+        "position": 0,
+        "secondToPx": 200,
+        "scrollLeft": 0
+      }
     }
   },
   "activeOutputSection": 0,
@@ -1556,7 +1648,7 @@
   "searchMatchWholeWord": false,
   "replaceEnabled": false,
   "replaceText": "",
-  "pageRuntimeFrontFace": false,
+  "pageRuntimeFrontFace": true,
   "breakpoints": {},
   "watchExpressions": [],
   "showComponentDescriptions": true,

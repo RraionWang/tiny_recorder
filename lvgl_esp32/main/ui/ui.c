@@ -231,7 +231,7 @@ const uint8_t assets[3468] = {
 
 native_var_t native_vars[] = {
     { NATIVE_VAR_TYPE_NONE, 0, 0 },
-    { NATIVE_VAR_TYPE_BOOLEAN, get_var_is_detected_rfid_new_card, set_var_is_detected_rfid_new_card }, 
+    { NATIVE_VAR_TYPE_STRING, get_var_rfid_uid, set_var_rfid_uid }, 
 };
 
 
@@ -240,7 +240,6 @@ ActionExecFunc actions[] = {
     action_stop_record,
     action_show_sd_card_list,
     action_drop_record_file,
-    action_test,
 };
 
 

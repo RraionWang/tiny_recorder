@@ -11,7 +11,6 @@ extern void action_start_record(lv_event_t * e);
 extern void action_stop_record(lv_event_t * e);
 extern void action_show_sd_card_list(lv_event_t * e);
 extern void action_drop_record_file(lv_event_t * e);
-extern void action_test(lv_event_t * e);
 
 
 #ifdef __cplusplus

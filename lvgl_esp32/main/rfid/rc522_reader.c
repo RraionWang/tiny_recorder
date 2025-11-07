@@ -75,29 +75,30 @@ static void on_picc_state_changed(void *arg, esp_event_base_t base, int32_t even
 
     if (picc->state == RC522_PICC_STATE_ACTIVE) {
 
+                char uid_hex[32] = {0};
+        for (uint8_t i = 0; i < picc->uid.length && i < 10; i++) {
+            snprintf(&uid_hex[i * 2], sizeof(uid_hex) - i * 2, "%02X", picc->uid.value[i]);
+        }
+
+        char filepath[128];
+        snprintf(filepath, sizeof(filepath), "/sdcard/%s.wav", uid_hex);
+        set_var_rfid_uid(uid_hex);
 
 
-        ESP_LOGI("RFID", "检测到卡片了");
-        set_var_is_detected_rfid_new_card(true);
-        ESP_LOGI("RFID", "变量设置为 %d", get_var_is_detected_rfid_new_card());
+
+        // ESP_LOGI("RFID", "检测到卡片了");
+        // set_var_is_detected_rfid_new_card(true);
+        // ESP_LOGI("RFID", "变量设置为 %d", get_var_is_detected_rfid_new_card());
 
         // 这个函数可以用来切换屏幕
         eez_flow_set_screen(SCREEN_ID_DETECTED_RFID_PAGE,LV_SCREEN_LOAD_ANIM_NONE,200,0);
 
         
 
-        // tick_screen_detected_rfid_page(); 
+  
 
 
 
-        // // ✅ 使用无空格的 HEX 字符串
-        // char uid_hex[32] = {0};
-        // for (uint8_t i = 0; i < picc->uid.length && i < 10; i++) {
-        //     snprintf(&uid_hex[i * 2], sizeof(uid_hex) - i * 2, "%02X", picc->uid.value[i]);
-        // }
-
-        // char filepath[128];
-        // snprintf(filepath, sizeof(filepath), "/sdcard/%s.wav", uid_hex);
 
         // ESP_LOGI("RFID", "检测到卡片，UID: %s", uid_hex);
 

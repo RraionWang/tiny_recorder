@@ -33,7 +33,7 @@
 static const char* TAG = "main";
 
 
-static inmp441_recorder_t recorder;
+
 
 
 
@@ -106,7 +106,7 @@ void app_main(void)
 
 
 
-    // ESP_ERROR_CHECK(inmp441_init(&recorder));
+
     // vTaskDelay(pdMS_TO_TICKS(2000)); // 等待SD卡就绪
     // ESP_ERROR_CHECK(inmp441_start_record(&recorder, "rec_test.wav"));
     // vTaskDelay(pdMS_TO_TICKS(10000)); // 录10秒
