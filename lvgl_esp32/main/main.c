@@ -75,7 +75,7 @@ void app_main(void)
     // sd_wr_test() ; 
     // ui_tick() ; 
 
-    // wav_player_init();
+     wav_player_init();
     // wav_player_play("/sdcard/canon.wav") ;
 
     rc522_reader_init() ; 

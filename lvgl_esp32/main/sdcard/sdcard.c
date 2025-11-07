@@ -11,6 +11,7 @@
 #include "pin_cng.h"
 #define TAG "SDMMC_TEST"
 #define MOUNT_POINT "/sdcard"
+#include "esp_vfs.h"
 
 static esp_err_t write_file(const char *path, const char *data)
 {
@@ -106,4 +107,24 @@ void sd_wr_test(void)
     // 卸载
     esp_vfs_fat_sdcard_unmount(MOUNT_POINT, card);
     ESP_LOGI(TAG, "Card unmounted, example complete.");
+}
+
+void sd_list_wav_files(void) {
+    const char *path = "/sdcard";
+    DIR *dir = opendir(path);
+    if (!dir) {
+        ESP_LOGE(TAG, "无法打开目录 %s", path);
+        return;
+    }
+
+    struct dirent *entry;
+    while ((entry = readdir(dir)) != NULL) {
+        if (entry->d_type != DT_REG) continue;  // 只列出文件
+        const char *ext = strrchr(entry->d_name, '.');
+        if (ext && strcasecmp(ext, ".wav") == 0) {
+            ESP_LOGI(TAG, "找到 WAV 文件: %s", entry->d_name);
+        }
+    }
+
+    closedir(dir);
 }

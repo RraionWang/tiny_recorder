@@ -13,6 +13,7 @@ typedef struct _objects_t {
     lv_obj_t *recording_page;
     lv_obj_t *stop_recording_page;
     lv_obj_t *sdcard_file_page;
+    lv_obj_t *play_existed_record;
     lv_obj_t *obj0;
     lv_obj_t *obj1;
     lv_obj_t *obj2;
@@ -32,6 +33,7 @@ enum ScreensEnum {
     SCREEN_ID_RECORDING_PAGE = 3,
     SCREEN_ID_STOP_RECORDING_PAGE = 4,
     SCREEN_ID_SDCARD_FILE_PAGE = 5,
+    SCREEN_ID_PLAY_EXISTED_RECORD = 6,
 };
 
 void create_screen_main();
@@ -48,6 +50,9 @@ void tick_screen_stop_recording_page();
 
 void create_screen_sdcard_file_page();
 void tick_screen_sdcard_file_page();
+
+void create_screen_play_existed_record();
+void tick_screen_play_existed_record();
 
 void tick_screen_by_id(enum ScreensEnum screenId);
 void tick_screen(int screen_index);
