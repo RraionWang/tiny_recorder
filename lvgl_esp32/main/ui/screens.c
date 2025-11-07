@@ -22,6 +22,21 @@ static void event_handler_cb_main_obj0(lv_event_t *e) {
         e->user_data = (void *)0;
         action_show_sd_card_list(e);
     }
+    if (event == LV_EVENT_PRESSED) {
+        e->user_data = (void *)0;
+        flowPropagateValueLVGLEvent(flowState, 2, 0, e);
+    }
+}
+
+static void event_handler_cb_main_obj1(lv_event_t *e) {
+    lv_event_code_t event = lv_event_get_code(e);
+    void *flowState = lv_event_get_user_data(e);
+    (void)flowState;
+    
+    if (event == LV_EVENT_PRESSED) {
+        e->user_data = (void *)0;
+        flowPropagateValueLVGLEvent(flowState, 4, 0, e);
+    }
 }
 
 static void event_handler_cb_detected_rfid_page_detected_rfid_page(lv_event_t *e) {
@@ -35,7 +50,7 @@ static void event_handler_cb_detected_rfid_page_detected_rfid_page(lv_event_t *e
     }
 }
 
-static void event_handler_cb_detected_rfid_page_obj1(lv_event_t *e) {
+static void event_handler_cb_detected_rfid_page_obj2(lv_event_t *e) {
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
@@ -46,7 +61,7 @@ static void event_handler_cb_detected_rfid_page_obj1(lv_event_t *e) {
     }
 }
 
-static void event_handler_cb_detected_rfid_page_obj2(lv_event_t *e) {
+static void event_handler_cb_detected_rfid_page_obj3(lv_event_t *e) {
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
@@ -61,7 +76,7 @@ static void event_handler_cb_detected_rfid_page_obj2(lv_event_t *e) {
     }
 }
 
-static void event_handler_cb_recording_page_obj3(lv_event_t *e) {
+static void event_handler_cb_recording_page_obj4(lv_event_t *e) {
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
@@ -76,7 +91,7 @@ static void event_handler_cb_recording_page_obj3(lv_event_t *e) {
     }
 }
 
-static void event_handler_cb_stop_recording_page_obj4(lv_event_t *e) {
+static void event_handler_cb_stop_recording_page_obj5(lv_event_t *e) {
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
@@ -87,7 +102,7 @@ static void event_handler_cb_stop_recording_page_obj4(lv_event_t *e) {
     }
 }
 
-static void event_handler_cb_stop_recording_page_obj5(lv_event_t *e) {
+static void event_handler_cb_stop_recording_page_obj6(lv_event_t *e) {
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
@@ -102,7 +117,7 @@ static void event_handler_cb_stop_recording_page_obj5(lv_event_t *e) {
     }
 }
 
-static void event_handler_cb_stop_recording_page_obj6(lv_event_t *e) {
+static void event_handler_cb_stop_recording_page_obj7(lv_event_t *e) {
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
@@ -110,6 +125,17 @@ static void event_handler_cb_stop_recording_page_obj6(lv_event_t *e) {
     if (event == LV_EVENT_PRESSED) {
         e->user_data = (void *)0;
         action_drop_record_file(e);
+    }
+}
+
+static void event_handler_cb_sdcard_file_page_obj8(lv_event_t *e) {
+    lv_event_code_t event = lv_event_get_code(e);
+    void *flowState = lv_event_get_user_data(e);
+    (void)flowState;
+    
+    if (event == LV_EVENT_PRESSED) {
+        e->user_data = (void *)0;
+        flowPropagateValueLVGLEvent(flowState, 2, 0, e);
     }
 }
 
@@ -133,7 +159,7 @@ void create_screen_main() {
         {
             lv_obj_t *obj = lv_button_create(parent_obj);
             objects.obj0 = obj;
-            lv_obj_set_pos(obj, 100, 106);
+            lv_obj_set_pos(obj, 160, 106);
             lv_obj_set_size(obj, 121, 50);
             lv_obj_add_event_cb(obj, event_handler_cb_main_obj0, LV_EVENT_ALL, flowState);
             lv_obj_set_style_text_font(obj, &ui_font_chinese_20, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -145,6 +171,24 @@ void create_screen_main() {
                     lv_obj_set_size(obj, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
                     lv_obj_set_style_align(obj, LV_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
                     lv_label_set_text(obj, "查看存储卡");
+                }
+            }
+        }
+        {
+            lv_obj_t *obj = lv_button_create(parent_obj);
+            objects.obj1 = obj;
+            lv_obj_set_pos(obj, 29, 107);
+            lv_obj_set_size(obj, 100, 50);
+            lv_obj_add_event_cb(obj, event_handler_cb_main_obj1, LV_EVENT_ALL, flowState);
+            {
+                lv_obj_t *parent_obj = obj;
+                {
+                    lv_obj_t *obj = lv_label_create(parent_obj);
+                    lv_obj_set_pos(obj, 0, 0);
+                    lv_obj_set_size(obj, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
+                    lv_obj_set_style_align(obj, LV_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
+                    lv_obj_set_style_text_font(obj, &ui_font_chinese_20, LV_PART_MAIN | LV_STATE_DEFAULT);
+                    lv_label_set_text(obj, "普通录音");
                 }
             }
         }
@@ -170,11 +214,12 @@ void create_screen_detected_rfid_page() {
         lv_obj_t *parent_obj = obj;
         {
             lv_obj_t *obj = lv_button_create(parent_obj);
-            objects.obj1 = obj;
+            objects.obj2 = obj;
             lv_obj_set_pos(obj, 187, 101);
             lv_obj_set_size(obj, 100, 50);
-            lv_obj_add_event_cb(obj, event_handler_cb_detected_rfid_page_obj1, LV_EVENT_ALL, flowState);
+            lv_obj_add_event_cb(obj, event_handler_cb_detected_rfid_page_obj2, LV_EVENT_ALL, flowState);
             lv_obj_set_style_bg_color(obj, lv_color_hex(0xffe13434), LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_text_font(obj, &ui_font_chinese_20, LV_PART_MAIN | LV_STATE_DEFAULT);
             {
                 lv_obj_t *parent_obj = obj;
                 {
@@ -189,10 +234,10 @@ void create_screen_detected_rfid_page() {
         }
         {
             lv_obj_t *obj = lv_button_create(parent_obj);
-            objects.obj2 = obj;
+            objects.obj3 = obj;
             lv_obj_set_pos(obj, 27, 102);
             lv_obj_set_size(obj, 100, 50);
-            lv_obj_add_event_cb(obj, event_handler_cb_detected_rfid_page_obj2, LV_EVENT_ALL, flowState);
+            lv_obj_add_event_cb(obj, event_handler_cb_detected_rfid_page_obj3, LV_EVENT_ALL, flowState);
             lv_obj_set_style_text_color(obj, lv_color_hex(0xffffffff), LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_bg_color(obj, lv_color_hex(0xff37932f), LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_text_font(obj, &ui_font_chinese_20, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -243,10 +288,10 @@ void create_screen_recording_page() {
         }
         {
             lv_obj_t *obj = lv_button_create(parent_obj);
-            objects.obj3 = obj;
+            objects.obj4 = obj;
             lv_obj_set_pos(obj, 110, 106);
             lv_obj_set_size(obj, 100, 50);
-            lv_obj_add_event_cb(obj, event_handler_cb_recording_page_obj3, LV_EVENT_ALL, flowState);
+            lv_obj_add_event_cb(obj, event_handler_cb_recording_page_obj4, LV_EVENT_ALL, flowState);
             lv_obj_set_style_bg_color(obj, lv_color_hex(0xffe13434), LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_text_font(obj, &ui_font_chinese_20, LV_PART_MAIN | LV_STATE_DEFAULT);
             {
@@ -288,10 +333,10 @@ void create_screen_stop_recording_page() {
         }
         {
             lv_obj_t *obj = lv_button_create(parent_obj);
-            objects.obj4 = obj;
+            objects.obj5 = obj;
             lv_obj_set_pos(obj, 33, 98);
             lv_obj_set_size(obj, 100, 50);
-            lv_obj_add_event_cb(obj, event_handler_cb_stop_recording_page_obj4, LV_EVENT_ALL, flowState);
+            lv_obj_add_event_cb(obj, event_handler_cb_stop_recording_page_obj5, LV_EVENT_ALL, flowState);
             {
                 lv_obj_t *parent_obj = obj;
                 {
@@ -305,18 +350,18 @@ void create_screen_stop_recording_page() {
         }
         {
             lv_obj_t *obj = lv_button_create(parent_obj);
-            objects.obj5 = obj;
+            objects.obj6 = obj;
             lv_obj_set_pos(obj, 186, 99);
             lv_obj_set_size(obj, 100, 50);
-            lv_obj_add_event_cb(obj, event_handler_cb_stop_recording_page_obj5, LV_EVENT_ALL, flowState);
+            lv_obj_add_event_cb(obj, event_handler_cb_stop_recording_page_obj6, LV_EVENT_ALL, flowState);
             {
                 lv_obj_t *parent_obj = obj;
                 {
                     lv_obj_t *obj = lv_label_create(parent_obj);
-                    objects.obj6 = obj;
+                    objects.obj7 = obj;
                     lv_obj_set_pos(obj, 0, 0);
                     lv_obj_set_size(obj, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
-                    lv_obj_add_event_cb(obj, event_handler_cb_stop_recording_page_obj6, LV_EVENT_ALL, flowState);
+                    lv_obj_add_event_cb(obj, event_handler_cb_stop_recording_page_obj7, LV_EVENT_ALL, flowState);
                     lv_obj_set_style_align(obj, LV_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
                     lv_label_set_text(obj, "丢弃录音");
                 }
@@ -343,9 +388,27 @@ void create_screen_sdcard_file_page() {
         lv_obj_t *parent_obj = obj;
         {
             lv_obj_t *obj = lv_list_create(parent_obj);
-            lv_obj_set_pos(obj, 57, 36);
+            lv_obj_set_pos(obj, 70, 12);
             lv_obj_set_size(obj, 180, 100);
-            lv_obj_set_style_text_font(obj, &lv_font_montserrat_14, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_text_font(obj, &ui_font_chinese_20, LV_PART_MAIN | LV_STATE_DEFAULT);
+        }
+        {
+            lv_obj_t *obj = lv_button_create(parent_obj);
+            objects.obj8 = obj;
+            lv_obj_set_pos(obj, 102, 122);
+            lv_obj_set_size(obj, 100, 50);
+            lv_obj_add_event_cb(obj, event_handler_cb_sdcard_file_page_obj8, LV_EVENT_ALL, flowState);
+            {
+                lv_obj_t *parent_obj = obj;
+                {
+                    lv_obj_t *obj = lv_label_create(parent_obj);
+                    lv_obj_set_pos(obj, 0, 0);
+                    lv_obj_set_size(obj, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
+                    lv_obj_set_style_align(obj, LV_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
+                    lv_obj_set_style_text_font(obj, &ui_font_chinese_20, LV_PART_MAIN | LV_STATE_DEFAULT);
+                    lv_label_set_text(obj, "返回");
+                }
+            }
         }
     }
     
@@ -359,7 +422,7 @@ void tick_screen_sdcard_file_page() {
 
 
 static const char *screen_names[] = { "main", "detected_rfid_page", "recording_page", "stop_recording_page", "sdcard_file_page" };
-static const char *object_names[] = { "main", "detected_rfid_page", "recording_page", "stop_recording_page", "sdcard_file_page", "obj0", "obj1", "obj2", "obj3", "obj4", "obj5", "obj6" };
+static const char *object_names[] = { "main", "detected_rfid_page", "recording_page", "stop_recording_page", "sdcard_file_page", "obj0", "obj1", "obj2", "obj3", "obj4", "obj5", "obj6", "obj7", "obj8" };
 
 
 typedef void (*tick_screen_func_t)();

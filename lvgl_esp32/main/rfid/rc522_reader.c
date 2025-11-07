@@ -14,6 +14,7 @@
 #include "recorder.h"
 #include "vars.h"
 #include "ui.h"
+#include "screens.h"
 
 static const char *TAG = "RC522_READER";
 
@@ -79,6 +80,9 @@ static void on_picc_state_changed(void *arg, esp_event_base_t base, int32_t even
         ESP_LOGI("RFID", "检测到卡片了");
         set_var_is_detected_rfid_new_card(true);
         ESP_LOGI("RFID", "变量设置为 %d", get_var_is_detected_rfid_new_card());
+
+        // 这个函数可以用来切换屏幕
+        eez_flow_set_screen(SCREEN_ID_DETECTED_RFID_PAGE,LV_SCREEN_LOAD_ANIM_NONE,200,0);
 
         
 

@@ -22,3 +22,7 @@ void action_show_sd_card_list(lv_event_t *e) {
 void action_drop_record_file(lv_event_t *e) {
     // TODO: Implement action drop_record_file here
 }
+
+ void action_test(lv_event_t * e){
+
+}
