@@ -5,7 +5,7 @@
   "idf.openOcdConfigs": [
     "board/esp32s3-builtin.cfg"
   ],
-  "idf.portWin": "COM11",
+  "idf.portWin": "COM5",
   "idf.toolsPathWin": "C:\\Users\\15768\\.espressif",
   "idf.customExtraVars": {
     "IDF_TARGET": "esp32s3"
@@ -18,38 +18,7 @@
   ],
   "idf.flashType": "UART",
   "files.associations": {
-    "encoder_input.h": "c",
-    "complex": "c",
-    "lvgl.h": "c",
-    "led_control.h": "c",
-    "charconv": "c",
-    "chrono": "c",
-    "optional": "c",
-    "format": "c",
-    "ratio": "c",
-    "system_error": "c",
-    "array": "c",
-    "functional": "c",
-    "regex": "c",
-    "tuple": "c",
-    "type_traits": "c",
-    "utility": "c",
-    "stdint.h": "c",
-    "actions.h": "c",
-    "esp_lvgl_port.h": "c",
-    "rc522.h": "c",
-    "rc522_picc.h": "c",
-    "rc522_driver.h": "c",
-    "rc522_reader.h": "c",
-    "pin_cfg.h": "c",
-    "esp_lcd_panel_vendor.h": "c",
-    "esp_lcd_panel_io.h": "c",
-    "esp_task.h": "c",
-    "freertosconfig.h": "c",
-    "bitset": "c",
-    "string_view": "c",
-    "initializer_list": "c",
-    "span": "c",
-    "esp_err.h": "c"
+    "esp_compiler.h": "c",
+    "gpio.h": "c"
   }
 }

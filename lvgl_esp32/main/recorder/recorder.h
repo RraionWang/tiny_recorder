@@ -5,7 +5,7 @@
 #include "driver/i2s_std.h"
 #include <stdio.h>
 #include <stdbool.h>
-#include "pin_cng.h"
+#include "pin_cfg.h"
 
 #ifdef __cplusplus
 extern "C" {

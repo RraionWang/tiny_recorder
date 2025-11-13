@@ -11,7 +11,7 @@
 #include "esp_vfs_fat.h"
 #include "sdmmc_cmd.h"
 #include "driver/spi_common.h"
-#include "pin_cng.h"
+#include "pin_cfg.h"
 #include "sdcard.h"
 
 /* ========= 引脚定义 ========= */

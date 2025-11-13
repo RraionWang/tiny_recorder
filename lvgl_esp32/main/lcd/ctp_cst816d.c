@@ -3,7 +3,7 @@
 #include "driver/gpio.h"
 #include "esp_log.h"
 #include "esp_check.h"
-#include "pin_cng.h"
+#include "pin_cfg.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
@@ -15,8 +15,8 @@
 #define TP_V_RES               320
 
 #define TP_SWAP_XY             0
-#define TP_MIRROR_X            0
-#define TP_MIRROR_Y            0
+#define TP_MIRROR_X            1
+#define TP_MIRROR_Y            1
 #define TP_GAP_X               0
 #define TP_GAP_Y               34
 

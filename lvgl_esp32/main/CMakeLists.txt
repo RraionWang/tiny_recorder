@@ -1,5 +1,5 @@
 idf_component_register(SRCS "main.c" 
-                            "encoder_input.c"
+                           
                             "ui/eez-flow.cpp"
                             "ui/screens.c"
                             "ui/styles.c"
@@ -18,6 +18,7 @@ idf_component_register(SRCS "main.c"
                              "recorder/recorder_control.c" 
                              "ui/actions.c"
                              "ui/vars.cpp"
+                             "lcd/ctp_cst816d.c"
 
                             
                     INCLUDE_DIRS "."
@@ -27,4 +28,5 @@ idf_component_register(SRCS "main.c"
                                  "rfid"
                                  "lcd"
                                  "speaker"
-                                 "recorder")
+                                 "recorder"
+                                 )

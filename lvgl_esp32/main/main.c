@@ -1,5 +1,3 @@
-
-#include "encoder_input.h"
 #include "eez-flow.h"
 #include "led_control.h"
 #include "vars.h"
@@ -19,6 +17,7 @@
 #include "time.h"
 #include "esp_log.h"
 #include "recorder.h"
+#include "ctp_cst816d.h"
 
 // 测试代码开始
 
@@ -45,8 +44,11 @@ void app_main(void)
 
   ESP_ERROR_CHECK(app_lcd_init());
   ESP_ERROR_CHECK(app_lvgl_init());
+  // run() ;
+  ctp_init() ; 
 
   ui_init();
+
 
   // sd_init();
   // // sd_wr_test() ;

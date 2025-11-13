@@ -9,7 +9,7 @@
 #include "driver/rc522_spi.h"
 #include "rc522_picc.h"
 #include "rc522_reader.h"
-#include "pin_cng.h"
+#include "pin_cfg.h"
 #include "speaker.h"
 #include "recorder.h"
 #include "vars.h"

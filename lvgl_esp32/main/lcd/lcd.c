@@ -1,6 +1,6 @@
 
 #include "lcd.h"
-#include "pin_cng.h"
+#include "pin_cfg.h"
 #include "esp_err.h"
 #include "esp_log.h"
 #include "esp_check.h"
@@ -11,7 +11,8 @@
 #include "esp_lcd_panel_ops.h"
 #include "esp_lvgl_port.h"
 #include "ui.h"  // 引入 UI 头文件
-#include "encoder_input.h"
+#include "ctp_cst816d.h"
+
 
 
 /* LCD size */
@@ -72,11 +73,7 @@ esp_err_t app_lcd_init(void)
     // ✅ 正确顺序：先创建 panel，再初始化
     const esp_lcd_panel_dev_config_t panel_config = {
         .reset_gpio_num = EXAMPLE_LCD_GPIO_RST,
-#if ESP_IDF_VERSION < ESP_IDF_VERSION_VAL(6, 0, 0)
-        .rgb_endian = LCD_RGB_ENDIAN_RGB,
-#else
-        .rgb_ele_order = LCD_RGB_ELEMENT_ORDER_RGB,
-#endif
+        .rgb_endian = LCD_RGB_ENDIAN_BGR,
         .bits_per_pixel = EXAMPLE_LCD_BITS_PER_PIXEL,
     };
     ESP_GOTO_ON_ERROR(esp_lcd_new_panel_st7789(lcd_io, &panel_config, &lcd_panel),
@@ -87,11 +84,11 @@ esp_err_t app_lcd_init(void)
     esp_lcd_panel_init(lcd_panel);
 
     // ✅ 显示方向修正
-    esp_lcd_panel_mirror(lcd_panel, false, true);
+    esp_lcd_panel_mirror(lcd_panel, true, true);
     esp_lcd_panel_set_gap(lcd_panel, 0, 34);
 
-    // ✅ 关闭反色
-    esp_lcd_panel_invert_color(lcd_panel, true);
+    // // ✅ 关闭反色
+    // esp_lcd_panel_invert_color(lcd_panel, true);
 
     // ✅ 打开背光
     gpio_set_level(EXAMPLE_LCD_GPIO_BL, EXAMPLE_LCD_BL_ON_LEVEL);
@@ -127,18 +124,22 @@ err:
         .double_buffer = EXAMPLE_LCD_DRAW_BUFF_DOUBLE,
         .hres = EXAMPLE_LCD_H_RES,
         .vres = EXAMPLE_LCD_V_RES,
-        .rotation = { .swap_xy = false, .mirror_x = false, .mirror_y = false },
+        .rotation = { .swap_xy = false, .mirror_x = false, .mirror_y = true },
         .flags = { .buff_dma = true, .swap_bytes = true }
     };
     lvgl_disp = lvgl_port_add_disp(&disp_cfg);
 
 
-    
+       ESP_LOGI("TAG","befor rotation is %d",    lvgl_disp->rotation);
 
-    lv_disp_set_rotation(lvgl_disp, LV_DISPLAY_ROTATION_270);
+    lv_disp_set_rotation(lvgl_disp, LV_DISPLAY_ROTATION_90);
 
-            // 注册编码器
-    encoder_init(lvgl_disp);
+    ESP_LOGI("TAG","after rotation is %d",    lvgl_disp->rotation);
+
+
+
+    ctp_register_lvgl(lvgl_disp); 
+
 
     return ESP_OK;
 }

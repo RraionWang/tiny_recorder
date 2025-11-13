@@ -8,7 +8,7 @@
 #include "sdmmc_cmd.h"
 #include "driver/sdmmc_host.h"
 #include "driver/gpio.h"
-#include "pin_cng.h"
+#include "pin_cfg.h"
 #define TAG "SDMMC_TEST"
 #define MOUNT_POINT "/sdcard"
 #include "esp_vfs.h"
